@@ -6,11 +6,6 @@ namespace TaskManagerApp
         static void Main(string[] args)
         {
             var taskService = new TaskService();
-
-            taskService.AddNewTask("Buy groceries", "Milk, eggs, bread");
-            taskService.AddNewTask("Finish report", "Complete the quarterly report");
-            taskService.AddNewTask("Call client", "Discuss project requirements");
-
             var taskView = new TaskView(taskService);
 
             Console.WriteLine("Task Manager Application");

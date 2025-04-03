@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace TaskManagerApp
 {
     class TaskView
@@ -41,16 +43,25 @@ namespace TaskManagerApp
                         RenderTaskList(tasks);
                     }
                 }
+                else if (key == ConsoleKey.N)
+                {
+                    var data = readData();
+                    taskService.AddNewTask(data.title, data.description);
+                    SetNormalMode();
+                    RenderTaskList(tasks!);
+                }
                 else if (isSelectionMode)
                 {
                     switch (key)
                     {
                         case ConsoleKey.UpArrow:
+                        case ConsoleKey.K:
                             selectedIndex = Math.Max(0, selectedIndex - 1);
                             RenderTaskList(tasks!);
                             break;
 
                         case ConsoleKey.DownArrow:
+                        case ConsoleKey.J:
                             selectedIndex = Math.Min(tasks!.Count - 1, selectedIndex + 1);
                             RenderTaskList(tasks!);
                             break;
@@ -61,14 +72,32 @@ namespace TaskManagerApp
                             break;
 
                         case ConsoleKey.Delete:
+                            DeleteTaskAtIndex();
                             SetNormalMode();
-                            DeleteTaskAtIndex(selectedIndex);
+                            RenderTaskList(tasks!);
+                            break;
+
+                        case ConsoleKey.R:
+                            MarkTaskAsCompleted();
+                            SetNormalMode();
                             RenderTaskList(tasks!);
                             break;
                     }
                 }
             }
         }
+
+        public (string title, string description) readData()
+        {
+
+            Console.WriteLine("\nEnter New Task");
+            Console.Write("Title : ");
+            string title = Console.ReadLine() ?? string.Empty;
+            Console.Write("Description: ");
+            string description = Console.ReadLine() ?? string.Empty;
+            return (title, description);
+        }
+
 
         public void SetNormalMode()
         {
@@ -82,15 +111,26 @@ namespace TaskManagerApp
             selectedIndex = 0;
         }
 
-        public Task? DeleteTaskAtIndex(int index)
-        {
 
+        public Task? DeleteTaskAtIndex()
+        {
             List<Task> tasks = taskService.GetTasksList();
-            if (index < 0 || index > tasks.Count) return null;
-            var task = tasks[index];
+            if (selectedIndex < 0 || selectedIndex > tasks.Count) return null;
+            var task = tasks[selectedIndex];
             taskService.Remove(task.Id);
             return task;
         }
+
+        public Task? MarkTaskAsCompleted()
+        {
+            List<Task> tasks = taskService.GetTasksList();
+            if (selectedIndex < 0 || selectedIndex > tasks.Count) return null;
+            var task = tasks[selectedIndex];
+            taskService.MarkTaskCompleted(task.Id);
+            return task;
+        }
+
+
         private void RenderTaskList(List<Task> tasks)
         {
             Console.Clear();
