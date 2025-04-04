@@ -19,13 +19,13 @@ namespace TaskManagerApp
             return input.Length > maxLength ? input.Substring(0, maxLength - 3) + "..." : input.PadRight(maxLength);
         }
 
-        public void DisplayTasks()
+        public async void DisplayTasks()
         {
-            var tasks = taskService.GetTasksList();
-            RenderTaskList(tasks);
 
             while (true)
             {
+                var tasks = await taskService.GetTasksListAsync();
+                RenderTaskList(tasks);
                 var key = Console.ReadKey(true).Key;
 
                 if (key == ConsoleKey.Enter && !isSelectionMode)
@@ -46,7 +46,7 @@ namespace TaskManagerApp
                 else if (key == ConsoleKey.N)
                 {
                     var data = readData();
-                    taskService.AddNewTask(data.title, data.description);
+                    await taskService.AddNewTaskAsync(data.title, data.description);
                     SetNormalMode();
                     RenderTaskList(tasks!);
                 }
@@ -112,26 +112,24 @@ namespace TaskManagerApp
         }
 
 
-        public Task? DeleteTaskAtIndex()
+        public async void DeleteTaskAtIndex()
         {
-            List<Task> tasks = taskService.GetTasksList();
-            if (selectedIndex < 0 || selectedIndex > tasks.Count) return null;
+            List<TodoItem> tasks = await taskService.GetTasksListAsync();
+            if (selectedIndex < 0 || selectedIndex > tasks.Count) return;
             var task = tasks[selectedIndex];
-            taskService.Remove(task.Id);
-            return task;
+            await taskService.RemoveAsync(task.id);
         }
 
-        public Task? MarkTaskAsCompleted()
+        public async void MarkTaskAsCompleted()
         {
-            List<Task> tasks = taskService.GetTasksList();
-            if (selectedIndex < 0 || selectedIndex > tasks.Count) return null;
+            List<TodoItem> tasks = await taskService.GetTasksListAsync();
+            if (selectedIndex < 0 || selectedIndex > tasks.Count) return;
             var task = tasks[selectedIndex];
-            taskService.MarkTaskCompleted(task.Id);
-            return task;
+            await taskService.MarkTaskCompletedAsync(task.id);
         }
 
 
-        private void RenderTaskList(List<Task> tasks)
+        private void RenderTaskList(List<TodoItem> tasks)
         {
             Console.Clear();
             Console.WriteLine("\nTask List (Press ESC to exit selection mode)");
@@ -148,10 +146,10 @@ namespace TaskManagerApp
             {
                 var task = tasks[i];
                 string selectionIndicator = (i == selectedIndex && isSelectionMode) ? "→ " : "  ";
-                string formattedTitle = TruncateString(task.Name, 20);
-                string formattedDescription = TruncateString(task.Description, 30);
-                string formattedCompleted = task.IsCompleted ? "✅" : "❌";
-                string formattedDueDate = task.DueDate.ToString("yyyy-MM-dd");
+                string formattedTitle = TruncateString(task.title, 20);
+                string formattedDescription = TruncateString(task.description, 30);
+                string formattedCompleted = task.isCompleted ? "✅" : "❌";
+                string formattedDueDate = task.dueDate.ToString("yyyy-MM-dd");
 
                 Console.WriteLine(
                     $"{selectionIndicator,-3}" +

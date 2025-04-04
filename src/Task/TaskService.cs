@@ -1,36 +1,78 @@
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
 namespace TaskManagerApp
 {
-    class TaskService
+    public class TaskService : IAsyncDisposable
     {
-        private readonly List<Task> tasks;
+        private readonly AppDbContext _dbContext;
 
         public TaskService()
         {
-            tasks = [];
+            _dbContext = new AppDbContext();
+            _dbContext.Database.EnsureCreated();
         }
-        public void AddNewTask(string title, string description)
+
+        public async Task AddNewTaskAsync(string title, string description)
         {
-            Task newTask = new Task(title, description, false, DateTime.Now);
-            tasks.Add(newTask);
+            var newTask = new TodoItem
+            {
+                id = Guid.NewGuid(),
+                title = title,
+                description = description,
+                dueDate = DateTime.UtcNow,  // Using UtcNow instead of new DateTime()
+                isCompleted = false,
+            };
+
+            await _dbContext.tasks.AddAsync(newTask);
+            await _dbContext.SaveChangesAsync();
         }
-        public List<Task> GetTasksList()
+
+        public async Task<List<TodoItem>> GetTasksListAsync()
         {
-            return tasks;
+            return await _dbContext.tasks.ToListAsync();
         }
-        public Task? Remove(Guid guid)
+
+        public async Task<TodoItem?> RemoveAsync(Guid guid)
         {
-            var foundTask = tasks.Find((item) => item.Id.Equals(guid));
-            if (foundTask == null) return null;
-            tasks.Remove(foundTask);
-            return foundTask;
+            var task = await _dbContext.tasks
+                .FirstOrDefaultAsync(t => t.id == guid);
+
+            if (task != null)
+            {
+                _dbContext.tasks.Remove(task);
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return task;
         }
-        public Task? MarkTaskCompleted(Guid guid)
+
+        public async Task<TodoItem?> MarkTaskCompletedAsync(Guid guid)
         {
-            var foundTask = tasks.Find((item) => item.Id.Equals(guid));
-            if (foundTask == null) return null;
-            foundTask.IsCompleted = true;
-            return foundTask;
+            var task = await _dbContext.tasks
+                .FirstOrDefaultAsync(t => t.id == guid);
+
+            if (task != null)
+            {
+                task.isCompleted = true;
+                await _dbContext.SaveChangesAsync();
+            }
+
+            return task;
         }
+
+        public async ValueTask DisposeAsync()
+        {
+            await _dbContext.DisposeAsync();
+        }
+
+        public void Dispose()
+        {
+            _dbContext.Dispose();
+        }
+
+
 
     }
 }

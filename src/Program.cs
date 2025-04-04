@@ -5,6 +5,10 @@ namespace TaskManagerApp
     {
         static void Main(string[] args)
         {
+
+            // Ensuring Database 
+            var db = new AppDbContext();
+
             var taskService = new TaskService();
             var taskView = new TaskView(taskService);
 
